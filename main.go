@@ -38,6 +38,12 @@ type LoginResponse struct {
 	User  User   `json:"user"`
 }
 
+// UserCredentials represents the simplified user response for the /users endpoint
+type UserCredentials struct {
+	Username string `json:"username" example:"betauser"`
+	Password string `json:"password" example:"betauser"`
+}
+
 // hardcoded user list
 var users = []User{
 	{
@@ -109,6 +115,24 @@ func login(c *gin.Context) {
 	})
 }
 
+// @Summary     List all users
+// @Description Returns a list of all available users with their credentials (for demo purposes only)
+// @Tags        users
+// @Accept      json
+// @Produce     json
+// @Success     200 {array} UserCredentials
+// @Router      /users [get]
+func listUsers(c *gin.Context) {
+	credentials := make([]UserCredentials, len(users))
+	for i, user := range users {
+		credentials[i] = UserCredentials{
+			Username: user.Username,
+			Password: user.Password,
+		}
+	}
+	c.JSON(http.StatusOK, credentials)
+}
+
 func main() {
 	r := gin.Default()
 
@@ -117,6 +141,9 @@ func main() {
 
 	// Login endpoint
 	r.POST("/login", login)
+
+	// List users endpoint
+	r.GET("/users", listUsers)
 
 	r.Run(":8080")
 }

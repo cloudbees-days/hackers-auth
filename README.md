@@ -66,6 +66,23 @@ Success Response (200):
 }
 ```
 
+#### GET /users
+Returns a list of all available users with their credentials. This endpoint is provided for demo purposes to easily populate the login form.
+
+Success Response (200):
+```json
+[
+  {
+    "username": "betauser",
+    "password": "betauser"
+  },
+  {
+    "username": "normaluser",
+    "password": "normaluser"
+  }
+]
+```
+
 ## Running Locally
 
 ### Prerequisites

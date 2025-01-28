@@ -16,6 +16,7 @@ func setupRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.Default()
 	r.POST("/login", login)
+	r.GET("/users", listUsers)
 	return r
 }
 
@@ -182,5 +183,35 @@ func TestFindUser(t *testing.T) {
 				assert.Nil(t, user)
 			}
 		})
+	}
+}
+
+func TestListUsers(t *testing.T) {
+	router := setupRouter()
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/users", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var response []UserCredentials
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(t, err)
+
+	// Verify we got all users
+	assert.Equal(t, len(users), len(response))
+
+	// Create a map of expected credentials
+	expectedCreds := make(map[string]string)
+	for _, user := range users {
+		expectedCreds[user.Username] = user.Password
+	}
+
+	// Verify each credential in the response
+	for _, cred := range response {
+		expectedPass, exists := expectedCreds[cred.Username]
+		assert.True(t, exists, "Username %s should exist", cred.Username)
+		assert.Equal(t, expectedPass, cred.Password, "Password for %s should match", cred.Username)
 	}
 }
