@@ -6,6 +6,7 @@ import (
 
 	_ "github.com/cloudbees-days/hackers-auth/docs" // Import the generated docs
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	swaggerFiles "github.com/swaggo/files"
@@ -135,6 +136,15 @@ func listUsers(c *gin.Context) {
 
 func main() {
 	r := gin.Default()
+
+	// CORS middleware configuration
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"*"} // For demo purposes, allow all origins
+	config.AllowMethods = []string{"GET", "POST", "OPTIONS"}
+	config.AllowHeaders = []string{"Origin", "Content-Type", "Authorization"}
+	config.ExposeHeaders = []string{"Content-Length"}
+	config.AllowCredentials = true
+	r.Use(cors.New(config))
 
 	// Swagger documentation endpoint
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
