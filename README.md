@@ -99,6 +99,59 @@ Success Response (200):
    docker run -p 8080:8080 hackers-auth
    ```
 
+## Helm Deployment
+
+### Prerequisites
+- Kubernetes cluster
+- Helm 3.x
+- cert-manager installed (for TLS)
+
+### Installation
+
+1. Create a custom values file (e.g., `my-values.yaml`):
+   ```yaml
+   # Image configuration
+   image:
+     repository: your-registry/hackers-auth  # Change to your image repository
+     tag: your-tag                          # Change to your image tag
+     pullPolicy: IfNotPresent
+
+   # Domain configuration
+   hostname: auth.your-domain.com           # Change to your domain
+
+   # Resource limits
+   resources:
+     requests:
+       cpu: 100m
+       memory: 128Mi
+     limits:
+       cpu: 200m
+       memory: 256Mi
+   ```
+
+2. Install the chart:
+   ```bash
+   helm install hackers-auth ./chart -f my-values.yaml
+   ```
+
+   Or upgrade an existing release:
+   ```bash
+   helm upgrade hackers-auth ./chart -f my-values.yaml
+   ```
+
+### Configuration Options
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `image.repository` | Image repository | `cloudbees-days/hackers-auth` |
+| `image.tag` | Image tag | `latest` |
+| `image.pullPolicy` | Image pull policy | `IfNotPresent` |
+| `hostname` | Service hostname | `hackers-auth.example.com` |
+| `resources.requests.cpu` | CPU request | `100m` |
+| `resources.requests.memory` | Memory request | `128Mi` |
+| `resources.limits.cpu` | CPU limit | `200m` |
+| `resources.limits.memory` | Memory limit | `256Mi` |
+
 ## Testing
 
 Run the test suite:
@@ -122,6 +175,7 @@ The test suite includes:
 ├── Dockerfile       # Docker configuration
 ├── .dockerignore    # Docker ignore file
 ├── .gitignore       # Git ignore file
+├── chart/           # Helm chart directory
 └── docs/           # Generated Swagger documentation (gitignored)
 ```
 
