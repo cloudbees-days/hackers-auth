@@ -3,6 +3,7 @@ FROM golang:1.23-alpine AS builder
 
 # Install git for fetching dependencies
 RUN apk add --no-cache git
+RUN go install github.com/swaggo/swag/cmd/swag@latest
 
 # Set working directory
 WORKDIR /app
@@ -12,7 +13,6 @@ COPY go.mod go.sum ./
 
 # Download dependencies
 RUN go mod download
-RUN go install github.com/swaggo/swag/cmd/swag@latest
 
 # Copy source code
 COPY . .
