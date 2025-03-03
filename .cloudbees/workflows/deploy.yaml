@@ -26,7 +26,7 @@ jobs:
           values: |
             image:
               repository: ${{ secrets.DOCKERHUB_USER }}/hackers-auth
-              tag: ${{ cloudbees.scm.sha }}
+              tag: latest
             hostname: microhacker-auth.preview.cb-demos.io
       - name: Publish evidence
         uses: cloudbees-io/publish-evidence-item@v1
@@ -35,5 +35,5 @@ jobs:
             ## Deployed environment
             [Dev frontend](https://microhacker-auth.preview.cb-demos.io/)
 
-            Running hackers-auth:${{ cloudbees.scm.sha }}
+            Running hackers-auth:latest
           format: MARKDOWN
