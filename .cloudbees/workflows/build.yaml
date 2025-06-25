@@ -48,7 +48,7 @@ jobs:
         name: Build container image
         kind: build
         with:
-          destination: ${{ secrets.DOCKERHUB_USER }}/hackers-auth:${{ cloudbees.scm.sha }},${{ secrets.DOCKERHUB_USER }}/hackers-auth:latest
+          destination: ${{ secrets.DOCKERHUB_USER }}/hackers-web:2.0-${{ cloudbees.version }},${{ secrets.DOCKERHUB_USER }}/hackers-auth:latest
           tar-path: container-image.tar
           build-args: BUILDKIT_CONTEXT_KEEP_GIT_DIR=1,BUILDKIT_INLINE_CACHE=1
       - uses: calculi-corp/assets-plugin-chain-utils/upload-binary@v1
