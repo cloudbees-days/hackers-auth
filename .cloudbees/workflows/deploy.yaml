@@ -34,7 +34,7 @@ on:
         required: false
 env:
   NAMESPACE: microhacker
-  APP_NAME: microhacker-api
+  APP_NAME: microhacker-auth
 jobs:
   deploy:
     environment: ${{ inputs.environment }}
