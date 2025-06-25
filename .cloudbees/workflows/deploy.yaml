@@ -21,6 +21,7 @@ on:
       artifactVersion:
         type: string
         required: true
+        default: latest
       environment:
         type: string
         required: true
@@ -56,14 +57,14 @@ jobs:
           values: |
             image:
               repository: ${{ secrets.DOCKERHUB_USER }}/hackers-auth
-              tag: latest
+              tag: ${{ inputs.artifactVersion }}
             hostname: microhacker-auth.preview.cb-demos.io
       - name: Register deployed artifact
         uses: cloudbees-io/register-deployed-artifact@v1
         with:
           name: ${{ secrets.DOCKERHUB_USER }}/hackers-auth
-          version: latest
-          url: "${{ secrets.DOCKERHUB_USER }}/hackers-auth:latest"
+          version: ${{ inputs.artifactVersion }}
+          url: "${{ secrets.DOCKERHUB_USER }}/hackers-auth:${{ inputs.artifactVersion }}"
           target-environment: micro-hacker
       - name: Publish evidence
         uses: cloudbees-io/publish-evidence-item@v1
@@ -72,5 +73,5 @@ jobs:
             ## Deployed environment
             [Dev frontend](https://microhacker-auth.preview.cb-demos.io/)
 
-            Running hackers-auth:latest
+            Running hackers-auth:${{ inputs.artifactVersion }}
           format: MARKDOWN
