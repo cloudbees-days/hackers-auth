@@ -40,6 +40,8 @@ jobs:
     steps:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
+        with:
+          repository: cloudbees-days/hackers-auth
       - uses: cashokannamalai/kubeconfig@v1
         name: Set kubeconfig
         with:
