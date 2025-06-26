@@ -13,6 +13,9 @@ on:
       environment:
         type: string
         required: true
+      digest:
+        type: string
+        required: false  
   workflow_dispatch:
     inputs:
       artifactName:
