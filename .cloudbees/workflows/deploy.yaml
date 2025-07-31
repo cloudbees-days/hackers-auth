@@ -51,7 +51,7 @@ jobs:
             image:
               repository: ${{ secrets.DOCKERHUB_USER }}/hackers-auth
               tag: ${{ inputs.artifactVersion }}
-            hostname: microhacker-auth.preview.cb-demos.io
+            hostname: hackers-auth.${{ inputs.environment }}.preview.cb-demos.io
       - name: Register deployed artifact
         uses: cloudbees-io/register-deployed-artifact@v2
         with:
@@ -62,7 +62,7 @@ jobs:
         with:
           content: |-
             ## Deployed environment
-            [Dev frontend](https://microhacker.preview.cb-demos.io/)
+            [Dev frontend](https://hackers-auth.${{ inputs.environment }}.preview.cb-demos.io/)
 
             Running hackers-auth:${{ inputs.artifactVersion }}
           format: MARKDOWN
