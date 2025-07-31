@@ -4,7 +4,7 @@ name: deploy
 on:
   workflow_call:
     inputs:
-      artifactName:
+      artifact-id:
         type: string
         required: true
       artifactVersion:
@@ -13,12 +13,9 @@ on:
       environment:
         type: string
         required: true
-      digest:
-        type: string
-        required: false  
   workflow_dispatch:
     inputs:
-      artifactName:
+      artifact-id:
         type: string
         required: true
       artifactVersion:
@@ -29,12 +26,6 @@ on:
         type: string
         required: true
         default: micro-hacker
-      url:
-        type: string
-        required: false
-      digest:
-        type: string
-        required: false
 env:
   APP_NAME: microhacker-auth
 jobs:
@@ -62,13 +53,10 @@ jobs:
               tag: ${{ inputs.artifactVersion }}
             hostname: microhacker-auth.preview.cb-demos.io
       - name: Register deployed artifact
-        uses: cloudbees-io/register-deployed-artifact@v1
+        uses: cloudbees-io/register-deployed-artifact@v2
         with:
-          name: ${{ secrets.DOCKERHUB_USER }}/hackers-auth
-          version: ${{ inputs.artifactVersion }}
-          url: "${{ secrets.DOCKERHUB_USER }}/hackers-auth:${{ inputs.artifactVersion }}"
-          digest: ${{ inputs.digest }}
-          target-environment: micro-hacker
+          artifact-id: ${{ inputs.artifact-id }}
+          target-environment: ${{ inputs.environment }}
       - name: Publish evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
