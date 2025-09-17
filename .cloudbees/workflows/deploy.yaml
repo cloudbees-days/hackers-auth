@@ -36,10 +36,10 @@ jobs:
         uses: cloudbees-io/checkout@v1
         with:
           repository: cloudbees-days/hackers-auth
-      - uses: cashokannamalai/kubeconfig@v1
+      - uses: cloudbees-days/setup-kubeconfig
         name: Set kubeconfig
         with:
-          secname: ${{ secrets.kubeconfig }}
+          kubeconfig: ${{ secrets.kubeconfig }}
       - id: install-chart
         name: Install helm chart
         uses: cloudbees-io/helm-install@v1
