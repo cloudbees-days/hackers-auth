@@ -199,4 +199,4 @@ The test suite includes:
 ### Notes
 - The JWT token expires after 24 hours
 - Swagger documentation is generated during Docker build
-- The service runs in release mode when deployed via Docker 
+- The service runs in release mode when deployed via Docker
