@@ -1,4 +1,4 @@
-name: build
+name: gha-build
 
 on:
   push:
