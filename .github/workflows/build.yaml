@@ -1,0 +1,179 @@
+name: build
+
+on:
+  push:
+    branches:
+      - "**"
+  workflow_dispatch:
+
+env:
+  GO_VERSION: "1.23"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      checks: write
+    outputs:
+      code-coverage: ${{ steps.run-unit-test.outputs.code-coverage }}
+
+    steps:
+      - name: Get source code
+        uses: actions/checkout@v4
+
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Run unit tests
+        id: run-unit-test
+        run: |
+          go install github.com/swaggo/swag/cmd/swag@latest
+          swag init
+          mkdir -p test_reports
+          go test -coverprofile=coverage.out -json ./... > test_reports/go-test-results.json
+          go build
+          echo "code-coverage<<EOF" >> $GITHUB_OUTPUT
+          cat coverage.out >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      # ========================================
+      # CloudBees Action: Publish Test Results to CloudBees Unify
+      # ----------------------------------------
+      # Publishes Go test results in JSON format to CloudBees Platform
+      #
+      # Docs: https://github.com/cloudbees-io-gha/publish-test-results
+      # ========================================
+      - name: Publish Test Results to CloudBees Unify
+        uses: cloudbees-io-gha/publish-test-results@v2
+        if: success() || failure()
+        with:
+          test-type: GO
+          results-path: test_reports/*
+
+      # ========================================
+      # CloudBees Action: Publish Build Evidence
+      # ----------------------------------------
+      # Creates audit trail and compliance documentation for the test process
+      #
+      # Docs: https://github.com/cloudbees-io-gha/publish-evidence-item
+      # ========================================
+      - name: Publish Test Evidence
+        uses: cloudbees-io-gha/publish-evidence-item@v2
+        with:
+          content: |-
+            ## Test code coverage
+            ${{ steps.run-unit-test.outputs.code-coverage }}
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Get source code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set version from Git
+        id: version
+        run: |
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          NEW_VERSION="2.0-${COMMIT_COUNT}-${SHORT_SHA}"
+          echo "Setting version to: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build and push container image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USER }}/hackers-auth:${{ steps.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILDKIT_CONTEXT_KEEP_GIT_DIR=1
+            BUILDKIT_INLINE_CACHE=1
+
+      # ========================================
+      # CloudBees Action: Register Build Artifacts
+      # ----------------------------------------
+      # Registers build artifacts with CloudBees Platform for artifact tracking and deployment
+      #
+      # Docs: https://github.com/cloudbees-io-gha/register-build-artifact
+      # ========================================
+      - name: Register Build Artifacts in CloudBees Platform
+        id: register-artifact
+        uses: cloudbees-io-gha/register-build-artifact@v3
+        with:
+          name: ${{ github.repository }}
+          url: docker.io/${{ secrets.DOCKERHUB_USER }}/hackers-auth:${{ steps.version.outputs.version }}
+          version: ${{ steps.version.outputs.version }}
+          type: Container
+
+      # ========================================
+      # CloudBees Action: Label Artifact Version
+      # ----------------------------------------
+      # Adds metadata labels to registered artifacts for organization and filtering
+      #
+      # Docs: https://github.com/cloudbees-io-gha/label-artifact-version
+      # ========================================
+      - name: Add Labels to Artifact
+        uses: cloudbees-io-gha/label-artifact-version@v1
+        with:
+          artifact-id: ${{ steps.register-artifact.outputs.cbp_artifact_id }}
+          labels: "go,docker"
+
+      # ========================================
+      # CloudBees Action: Publish Build Evidence
+      # ----------------------------------------
+      # Creates audit trail and compliance documentation for the build process
+      #
+      # Docs: https://github.com/cloudbees-io-gha/publish-evidence-item
+      # ========================================
+      - name: Publish Build Evidence
+        uses: cloudbees-io-gha/publish-evidence-item@v2
+        with:
+          content: |-
+            ## Built and pushed image to Docker Hub
+
+            ### Artifact Details
+            - **Repository**: ${{ github.repository }}
+            - **Version**: ${{ steps.version.outputs.version }}
+            - **Artifact ID**: ${{ steps.register-artifact.outputs.cbp_artifact_id }}
+            - **Type**: Container
+
+            ### Docker Hub
+            [Docker Hub Repository](https://hub.docker.com/repository/docker/${{ secrets.DOCKERHUB_USER }}/hackers-auth/tags)
+
+            ### Deployment
+            Deployed hackers-auth:${{ github.sha }}
+
+            ### Workflow Summary
+            - **Branch**: ${{ github.ref_name }}
+            - **Commit**: ${{ github.sha }}
+            - **Run**: ${{ github.run_number }}
+            - **Triggered by**: ${{ github.event_name }}
